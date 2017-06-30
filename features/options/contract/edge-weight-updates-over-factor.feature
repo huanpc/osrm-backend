@@ -33,18 +33,25 @@ Feature: osrm-contract command line option: edge-weight-updates-over-factor
 
 
     Scenario: Logging using weigts as durations for non-duration profile
-        Given the profile file "testbot" extended with
+        Given the profile file
         """
-        function specialize(profile)
+        functions = require('testbot')
+
+        function initialize(profile)
             profile.weight_name = 'steps'
+          return profile
         end
 
-        function way_function(way, result)
+        function way_function(profile, way, result)
           result.forward_mode = mode.driving
           result.backward_mode = mode.driving
           result.weight = 1
           result.duration = 1
         end
+
+        table.insert(functions.initialize,initialize)
+        functions.way = way_function
+        return functions
         """
         And the data has been saved to disk
 

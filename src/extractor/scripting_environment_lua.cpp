@@ -429,18 +429,7 @@ void Sol2ScriptingEnvironment::InitContext(LuaScriptingContext &context)
 
     util::luaAddScriptFolderToLoadPath(context.state.lua_state(), file_name.c_str());
 
-    context.state.script_file(file_name);
-
-    // cache references to functions for faster execution
-    context.turn_function = context.state["turn_function"];
-    context.node_function = context.state["node_function"];
-    context.way_function = context.state["way_function"];
-    context.segment_function = context.state["segment_function"];
-
-    context.has_turn_penalty_function = context.turn_function.valid();
-    context.has_node_function = context.node_function.valid();
-    context.has_way_function = context.way_function.valid();
-    context.has_segment_function = context.segment_function.valid();
+    sol::optional<sol::table> function_table = context.state.script_file(file_name);
 
     // Check profile API version
     auto maybe_version = context.state.get<sol::optional<int>>("api_version");
@@ -470,20 +459,34 @@ void Sol2ScriptingEnvironment::InitContext(LuaScriptingContext &context)
         // clear global not used in v2
         context.state["properties"] = sol::nullopt;
 
-        // call mandatory initialize function
-        sol::function initialize_function = context.state["initialize"];
-        if (!initialize_function.valid())
-            throw util::exception("Profile must have an initialize() function.");
-        sol::optional<sol::table> profile_table = initialize_function();
-        if (profile_table == sol::nullopt)
-            throw util::exception("Profile initialize() must return a table.");
-        else
-            context.profile_table = profile_table;
 
-        // call optional specialize function
-        sol::function specialize_function = context.state["specialize"];
-        if (specialize_function.valid())
-            specialize_function(profile_table.value());
+        if (function_table == sol::nullopt)
+            throw util::exception("Profile must return a function table.");
+        
+        // call initialize sequence
+        sol::table table = function_table.value()["initialize"];
+        sol::table profile_table;
+        if (table.valid())
+        {
+            for (auto &&pair : table)
+            {
+                sol::optional<sol::function>   init_function = pair.second.as<sol::function>();
+                profile_table = init_function.value()( profile_table );
+            };
+        }
+        // store resulting profile table
+        context.profile_table = profile_table;
+
+        context.turn_function = function_table.value()["turn"];
+        context.node_function = function_table.value()["node"];
+        context.way_function = function_table.value()["way"];
+        context.segment_function = function_table.value()["segment"];
+
+        context.has_turn_penalty_function = context.turn_function.valid();
+        context.has_node_function = context.node_function.valid();
+        context.has_way_function = context.way_function.valid();
+        context.has_segment_function = context.segment_function.valid();
+
 
         // set constants
         context.state.new_enum("constants",
@@ -493,49 +496,60 @@ void Sol2ScriptingEnvironment::InitContext(LuaScriptingContext &context)
                                std::numeric_limits<TurnPenalty>::max());
 
         // read properties from 'profile' table
-        sol::optional<std::string> weight_name = profile_table.value()["weight_name"];
+        sol::optional<std::string> weight_name = context.profile_table["weight_name"];
         if (weight_name != sol::nullopt)
             context.properties.SetWeightName(weight_name.value());
 
         sol::optional<std::int32_t> traffic_signal_penalty =
-            profile_table.value()["traffic_signal_penalty"];
+            context.profile_table["traffic_signal_penalty"];
         if (traffic_signal_penalty != sol::nullopt)
             context.properties.SetTrafficSignalPenalty(traffic_signal_penalty.value());
 
-        sol::optional<std::int32_t> u_turn_penalty = profile_table.value()["u_turn_penalty"];
+        sol::optional<std::int32_t> u_turn_penalty = context.profile_table["u_turn_penalty"];
         if (u_turn_penalty != sol::nullopt)
             context.properties.SetUturnPenalty(u_turn_penalty.value());
 
         sol::optional<double> max_speed_for_map_matching =
-            profile_table.value()["max_speed_for_map_matching"];
+            context.profile_table["max_speed_for_map_matching"];
         if (max_speed_for_map_matching != sol::nullopt)
             context.properties.SetMaxSpeedForMapMatching(max_speed_for_map_matching.value());
 
         sol::optional<bool> continue_straight_at_waypoint =
-            profile_table.value()["continue_straight_at_waypoint"];
+            context.profile_table["continue_straight_at_waypoint"];
         if (continue_straight_at_waypoint != sol::nullopt)
             context.properties.continue_straight_at_waypoint =
                 continue_straight_at_waypoint.value();
 
-        sol::optional<bool> use_turn_restrictions = profile_table.value()["use_turn_restrictions"];
+        sol::optional<bool> use_turn_restrictions = context.profile_table["use_turn_restrictions"];
         if (use_turn_restrictions != sol::nullopt)
             context.properties.use_turn_restrictions = use_turn_restrictions.value();
 
-        sol::optional<bool> left_hand_driving = profile_table.value()["left_hand_driving"];
+        sol::optional<bool> left_hand_driving = context.profile_table["left_hand_driving"];
         if (left_hand_driving != sol::nullopt)
             context.properties.left_hand_driving = left_hand_driving.value();
 
-        sol::optional<unsigned> weight_precision = profile_table.value()["weight_precision"];
+        sol::optional<unsigned> weight_precision = context.profile_table["weight_precision"];
         if (weight_precision != sol::nullopt)
             context.properties.weight_precision = weight_precision.value();
 
-        sol::optional<bool> force_split_edges = profile_table.value()["force_split_edges"];
+        sol::optional<bool> force_split_edges = context.profile_table["force_split_edges"];
         if (force_split_edges != sol::nullopt)
             context.properties.force_split_edges = force_split_edges.value();
 
         break;
     }
     case 1:
+         // cache references to functions for faster execution
+        context.turn_function = context.state["turn_function"];
+        context.node_function = context.state["node_function"];
+        context.way_function = context.state["way_function"];
+        context.segment_function = context.state["segment_function"];
+
+        context.has_turn_penalty_function = context.turn_function.valid();
+        context.has_node_function = context.node_function.valid();
+        context.has_way_function = context.way_function.valid();
+        context.has_segment_function = context.segment_function.valid();
+
         // set constants
         context.state.new_enum("constants", "precision", COORDINATE_PRECISION);
 
@@ -543,20 +557,20 @@ void Sol2ScriptingEnvironment::InitContext(LuaScriptingContext &context)
         BOOST_ASSERT(context.properties.GetTrafficSignalPenalty() == 0);
         break;
     case 0:
+         // cache references to functions for faster execution
+        context.turn_function = context.state["turn_function"];
+        context.node_function = context.state["node_function"];
+        context.way_function = context.state["way_function"];
+        context.segment_function = context.state["segment_function"];
+
+        context.has_turn_penalty_function = context.turn_function.valid();
+        context.has_node_function = context.node_function.valid();
+        context.has_way_function = context.way_function.valid();
+        context.has_segment_function = context.segment_function.valid();
+
         BOOST_ASSERT(context.properties.GetWeightName() == "duration");
         break;
     }
-
-    // check lua functions
-    sol::function turn_function = context.state["turn_function"];
-    sol::function node_function = context.state["node_function"];
-    sol::function way_function = context.state["way_function"];
-    sol::function segment_function = context.state["segment_function"];
-
-    context.has_turn_penalty_function = turn_function.valid();
-    context.has_node_function = node_function.valid();
-    context.has_way_function = way_function.valid();
-    context.has_segment_function = segment_function.valid();
 }
 
 const ProfileProperties &Sol2ScriptingEnvironment::GetProfileProperties()
@@ -649,7 +663,7 @@ Sol2ScriptingEnvironment::GetStringListFromTable(const std::string &table_name)
     auto &context = GetSol2Context();
     BOOST_ASSERT(context.state.lua_state() != nullptr);
     std::vector<std::string> strings;
-    sol::table table = context.profile_table.value()[table_name];
+    sol::table table = context.profile_table[table_name];
     if (table.valid())
     {
         for (auto &&pair : table)

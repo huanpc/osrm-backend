@@ -1,48 +1,6 @@
-api_version = 2
--- Rasterbot profile
+-- Rasterbot with interpolation profile
 
-
-function initialize()
-  return {
-    call_tagless_node_function = false
-  }
-end
-
--- Minimalist node_ and way_functions in order to test source_ and segment_functions
-
-function node_function (profile, node, result)
-end
-
-function way_function (profile, way, result)
-  local highway = way:get_value_by_key("highway")
-  local name = way:get_value_by_key("name")
-
-  if name then
-    result.name = name
-  end
-
-  result.forward_mode = mode.cycling
-  result.backward_mode = mode.cycling
-
-  result.forward_speed = 15
-  result.backward_speed = 15
-end
-
-function source_function (profile)
-  local path = os.getenv('OSRM_RASTER_SOURCE')
-  if not path then
-    path = "rastersource.asc"
-  end
-  raster_source = sources:load(
-    path,
-    0,    -- lon_min
-    0.1,  -- lon_max
-    0,    -- lat_min
-    0.1,  -- lat_max
-    5,    -- nrows
-    4     -- ncols
-  )
-end
+functions = require('rasterbot')
 
 function segment_function (profile, segment)
   local sourceData = sources:interpolate(raster_source, segment.source.lon, segment.source.lat)
@@ -66,3 +24,6 @@ function segment_function (profile, segment)
   segment.weight = scaled_weight
   segment.duration = scaled_duration
 end
+
+functions.segment = segment_function
+return functions

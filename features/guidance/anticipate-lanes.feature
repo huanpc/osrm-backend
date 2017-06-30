@@ -582,11 +582,9 @@ Feature: Turn Lane Guidance
 
     @anticipate
     Scenario: No Lanes for Roundabouts, see #2626
-        Given the profile file "car" extended with
+        Given the profile file "car" initialized with
         """
-        function specialize(profile)
-          profile.left_hand_driving = true
-        end
+        profile.left_hand_driving = true
         """
         And the node map
             """

@@ -2,11 +2,9 @@
 Feature: Bicycle - Route around alleys
 
     Background:
-        Given the profile file "bicycle" extended with
+        Given the profile file "bicycle" initialized with
         """
-        function specialize(profile)
-          profile.weight_name = 'cyclability'
-        end
+        profile.weight_name = 'cyclability'
         """
 
     Scenario: Bicycle - Avoid taking alleys

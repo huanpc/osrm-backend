@@ -62,11 +62,9 @@ Feature: Car - weights
             | a    | e  | ab,be,be    | 14 km/h | 112    |
 
     Scenario: Distance weights
-        Given the profile file "car" extended with
+        Given the profile file "car" initialized with
         """
-        function specialize(profile)
-          profile.weight_name = 'distance'
-        end
+        profile.weight_name = 'distance'
         """
 
         Given the node map

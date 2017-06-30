@@ -221,17 +221,24 @@ Feature: Basic Distance Matrix
             | 4 | 30 +-1 | 40 +-1 | 70 +-1 | 0  |
 
     Scenario: Testbot - Travel time matrix based on segment durations
-        Given the profile file "testbot" extended with
+        Given the profile file
         """
-        function specialize(profile)
+        functions = require('testbot')
+        
+        function initialize(profile)
           profile.traffic_signal_penalty = 0
           profile.u_turn_penalty = 0
+          return profile
         end
 
         function segment_function (profile, segment)
           segment.weight = 2
           segment.duration = 11
         end
+
+        functions.segment = segment_function
+        table.insert(functions.initialize,initialize)
+        return functions
         """
 
         And the node map
@@ -256,18 +263,25 @@ Feature: Basic Distance Matrix
 
 
     Scenario: Testbot - Travel time matrix for alternative loop paths
-        Given the profile file "testbot" extended with
+        Given the profile file
         """
-        function specialize(profile)
+        functions = require('testbot')
+
+        function initialize(profile)
           profile.traffic_signal_penalty = 0
           profile.u_turn_penalty = 0
           profile.weight_precision = 3
+          return profile
         end
 
-        function segment_function (profile, segment)
+        function segment_function(profile, segment)
           segment.weight = 777
           segment.duration = 3
         end
+
+        functions.segment = segment_function
+        table.insert(functions.initialize,initialize)
+        return functions
         """
         And the node map
             """

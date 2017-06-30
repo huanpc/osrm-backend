@@ -248,17 +248,19 @@ module.exports = function () {
         fs.writeFile(this.penaltiesCacheFile, data, callback);
     });
 
-    this.Given(/^the profile file(?: "([^"]*)" extended with)?$/, (profile, data, callback) => {
+    this.Given(/^the profile file(?: "([^"]*)" initialized with)?$/, (profile, data, callback) => {
         const lua_profiles_path = this.PROFILES_PATH.split(path.sep).join('/');
         let text = 'package.path = "' + lua_profiles_path + '/?.lua;" .. package.path\n';
         if (profile == null) {
             text += data + '\n';
         } else {
-            text += 'local f = assert(io.open("' + lua_profiles_path + '/' + profile + '.lua", "r"))\n';
-            text += 'local s = f:read("*all") .. [[\n' + data + '\n]]\n';
-            text += 'f:close()\n';
-            text += 'local m = assert(loadstring and loadstring(s) or load(s))\n';
-            text += 'm()\n';
+            text += 'functions = require("' + profile + '")\n';
+            text += 'function initialize(profile)\n';
+            text += data + '\n';
+            text += '  return profile\n';
+            text += 'end\n';
+            text += 'table.insert(functions.initialize,initialize)\n';
+            text += 'return functions\n';
         }
         this.profileFile = this.profileCacheFile;
         // TODO: Don't overwrite if it exists

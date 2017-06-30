@@ -89,9 +89,16 @@ function Debug.report_tag_fetches()
   print(Debug.tags.total, 'total')
 end
 
+function Debug.init_sequence(profile,sequence)
+  for i,func in ipairs(sequence) do
+    profile = func(profile)
+  end
+  return profile
+end
+
 function Debug.load_profile(profile)
-  require(profile)
-  Debug.profile = initialize()
+  Debug.functions = require(profile)
+  Debug.profile = Debug.init_sequence({},Debug.functions.initialize)
 end
 
 function Debug.reset_tag_fetch_counts()

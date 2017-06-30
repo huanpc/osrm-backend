@@ -1,5 +1,6 @@
-api_version = 2
 -- Rasterbot profile
+
+require('lib/profile_v2')
 
 function initialize()
   return {
@@ -8,11 +9,7 @@ function initialize()
   }
 end
 
--- Minimalist node_ and way_functions in order to test source_ and segment_functions
-
-function node_function (profile, node, result)
-end
-
+-- Minimalist way_functions in order to test source_ and segment_functions
 function way_function (profile, way, result)
   local highway = way:get_value_by_key("highway")
   local name = way:get_value_by_key("name")
@@ -66,3 +63,5 @@ function segment_function (profile, segment)
   segment.weight = scaled_weight
   segment.duration = scaled_duration
 end
+
+return profile_functions()

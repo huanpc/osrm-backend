@@ -8,13 +8,11 @@ Feature: Traffic - speeds edge cases
         And the ways
           | nodes | highway |
           | ab    | primary |
-        And the profile file "testbot" extended with
+        And the profile file "testbot" initialized with
         """
-        function specialize(profile)
-          profile.traffic_signal_penalty = 0
-          profile.u_turn_penalty = 0
-          profile.weight_precision = 2
-        end
+        profile.traffic_signal_penalty = 0
+        profile.u_turn_penalty = 0
+        profile.weight_precision = 2
         """
         And the contract extra arguments "--segment-speed-file {speeds_file}"
         And the customize extra arguments "--segment-speed-file {speeds_file}"

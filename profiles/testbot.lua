@@ -1,10 +1,11 @@
-api_version = 2
 -- Testbot profile
 
 -- Moves at fixed, well-known speeds, practical for testing speed and travel times:
 -- Primary road:  36km/h = 36000m/3600s = 100m/10s
 -- Secondary road:  18km/h = 18000m/3600s = 100m/20s
 -- Tertiary road:  12km/h = 12000m/3600s = 100m/30s
+
+require('lib/profile_v2')
 
 function initialize()
   return {
@@ -129,3 +130,5 @@ function turn_function (profile, turn)
      turn.duration = turn.duration + profile.traffic_light_penalty
   end
 end
+
+return profile_functions()

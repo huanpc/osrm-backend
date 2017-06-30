@@ -60,12 +60,15 @@ Feature: Weight tests
 
 
     Scenario: Step weights -- way_function: fail if no weight or weight_per_meter property
-        Given the profile file "testbot" extended with
+        Given the profile file
         """
-        function specialize(profile)
+        functions = require('testbot')
+
+        function initialize(profile)
           profile.traffic_signal_penalty = 0
           profile.u_turn_penalty = 0
           profile.weight_name = 'steps'
+          return profile
         end
 
         function way_function(profile, way, result)
@@ -74,6 +77,10 @@ Feature: Weight tests
           result.forward_speed = 42
           result.backward_speed = 42
         end
+
+        functions.way = way_function
+        table.insert(functions.initialize,initialize)
+        return functions
         """
         And the node map
             """
@@ -89,12 +96,15 @@ Feature: Weight tests
         And it should exit with an error
 
     Scenario: Step weights -- way_function: second way wins
-        Given the profile file "testbot" extended with
+        Given the profile file
         """
-        function specialize(profile)
+        functions = require('testbot')
+
+        function initialize(profile)
           profile.traffic_signal_penalty = 0
           profile.u_turn_penalty = 0
           profile.weight_name = 'steps'
+          return profile
         end
 
         function way_function(profile, way, result)
@@ -103,6 +113,10 @@ Feature: Weight tests
           result.duration = 42
           result.weight = 35
         end
+
+        functions.way = way_function
+        table.insert(functions.initialize,initialize)
+        return functions
         """
 
         Given the node map
@@ -123,13 +137,17 @@ Feature: Weight tests
             | h,a       | ,     | 140m +-1 | 35,0    | 42s,0s |
 
     Scenario: Step weights -- way_function: higher weight_per_meter is preferred
-        Given the profile file "testbot" extended with
+        Given the profile file
         """
-        function specialize(profile)
+        functions = require('testbot')
+
+        function initialize(profile)
           profile.traffic_signal_penalty = 0
           profile.u_turn_penalty = 0
           profile.weight_name = 'steps'
+          return profile
         end
+
         function way_function(profile, way, result)
           result.forward_mode = mode.driving
           result.backward_mode = mode.driving
@@ -137,6 +155,10 @@ Feature: Weight tests
           result.forward_rate = 1
           result.backward_rate = 0.5
         end
+
+        functions.way = way_function
+        table.insert(functions.initialize,initialize)
+        return functions
         """
 
         Given the node map
@@ -160,12 +182,15 @@ Feature: Weight tests
             | h,f       | ,     | 40m      | 80,0    | 12s,0s |
 
     Scenario: Step weights -- segment_function
-        Given the profile file "testbot" extended with
+        Given the profile file
         """
-        function specialize(profile)
+        functions = require('testbot')
+
+        function initialize(profile)
           profile.traffic_signal_penalty = 0
           profile.u_turn_penalty = 0
           profile.weight_name = 'steps'
+          return profile
         end
 
         function way_function(profile, way, result)
@@ -174,10 +199,16 @@ Feature: Weight tests
           result.weight = 42
           result.duration = 3
         end
+
         function segment_function (profile, segment)
           segment.weight = 1
           segment.duration = 11
         end
+
+        functions.way = way_function
+        functions.segment = segment_function
+        table.insert(functions.initialize,initialize)
+        return functions
         """
 
         Given the node map
@@ -202,13 +233,16 @@ Feature: Weight tests
 
 
     Scenario: Step weights -- segment_function and turn_function with weight precision
-        Given the profile file "testbot" extended with
+        Given the profile file
         """
-        function specialize(profile)
+        functions = require('testbot')
+
+        function initialize(profile)
           profile.traffic_signal_penalty = 0
           profile.u_turn_penalty = 0
           profile.weight_name = 'steps'
           profile.weight_precision = 3
+          return profile
         end
 
         function way_function(profile, way, result)
@@ -217,15 +251,23 @@ Feature: Weight tests
           result.weight = 42
           result.duration = 3
         end
-        function segment_function (profile, segment)
+
+        function segment_function(profile, segment)
           segment.weight = 1.11
           segment.duration = 100
         end
-        function turn_function (profile, turn)
+
+        function turn_function(profile, turn)
           print (turn.angle)
           turn.weight = 2 + turn.angle / 100
           turn.duration = turn.angle
         end
+
+        functions.way = way_function
+        functions.segment = segment_function
+        functions.turn = turn_function
+        table.insert(functions.initialize,initialize)
+        return functions
         """
 
         Given the node map
@@ -250,12 +292,15 @@ Feature: Weight tests
 
     @traffic @speed
     Scenario: Step weights -- segment_function with speed and turn updates
-        Given the profile file "testbot" extended with
+        Given the profile file
         """
-        function specialize(profile)
+        functions = require('testbot')
+
+        function initialize(profile)
           profile.traffic_signal_penalty = 0
           profile.u_turn_penalty = 0
           profile.weight_name = 'steps'
+          return profile
         end
 
         function way_function(profile, way, result)
@@ -264,10 +309,17 @@ Feature: Weight tests
           result.weight = 42
           result.duration = 3
         end
+
         function segment_function (profile, segment)
           segment.weight = 10
           segment.duration = 11
         end
+
+        functions.way = way_function
+        functions.segment = segment_function
+        table.insert(functions.initialize,initialize)
+        return functions
+
         """
 
         And the node map
@@ -300,11 +352,9 @@ Feature: Weight tests
 
     @traffic @speed
     Scenario: Step weights -- segment_function with speed and turn updates with fallback to durations
-        Given the profile file "testbot" extended with
+        Given the profile file "testbot" initialized with
         """
-        function specialize(profile)
-          profile.weight_precision = 3
-        end
+        profile.weight_precision = 3
         """
 
         And the node map

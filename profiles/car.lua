@@ -1,12 +1,5 @@
 -- Car profile
-api_version = 2
-
-local find_access_tag = require("lib/access").find_access_tag
-local Set = require('lib/set')
-local Sequence = require('lib/sequence')
-local Handlers = require("lib/handlers")
-local next = next       -- bind to local for speed
-
+require('lib/profile_v2')
 
 function initialize()
   local use_left_hand_driving = false
@@ -407,3 +400,5 @@ function turn_function (profile, turn)
       end
   end
 end
+
+return profile_functions()

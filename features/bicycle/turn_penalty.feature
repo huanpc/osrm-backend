@@ -7,11 +7,15 @@ Feature: Turn Penalties
 
 
     Scenario: Bicycle - Turn penalties on cyclability
-        Given the profile file "bicycle" extended with
+        Given the profile file
         """
-        function specialize(profile)
+        functions = require('bicycle')
+        function initialize(profile)
           profile.weight_name = 'cyclability'
+          return profile
         end
+        table.insert(functions.initialize,initialize)
+        return functions
         """
 
         Given the node map

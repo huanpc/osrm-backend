@@ -1,21 +1,11 @@
 @routing @testbot @sidebias
 Feature: Testbot - side bias
 
-    Background:
-        Given the profile file "testbot" extended with
+    Scenario: Left-hand bias
+        Given the profile file "car" initialized with
         """
-        function specialize(profile)
-          profile.left_hand_driving = true
-        end
-        """
-
-    Scenario: Left hand bias
-        Given the profile file "car" extended with
-        """
-        function specialize(profile)
-          profile.left_hand_driving = true
-          profile.turn_bias = profile.left_hand_driving and 1/1.075 or 1.075
-        end
+        profile.left_hand_driving = true
+        profile.turn_bias = 1/1.075
         """
         Given the node map
             """
@@ -34,14 +24,11 @@ Feature: Testbot - side bias
             | d    | a  | bd,ab,ab | 24s +-1    |
             | d    | c  | bd,bc,bc | 27s +-1    |
 
-    Scenario: Right hand bias
-        Given the profile file "car" extended with
+    Scenario: Right-hand bias
+        Given the profile file "car" initialized with
         """
-        function specialize(profile)
-          use_left_hand_driving = false
-          profile.left_hand_driving = use_left_hand_driving
-          profile.turn_bias = use_left_hand_driving and 1/1.075 or 1.075
-        end
+        profile.left_hand_driving = true
+        profile.turn_bias = 1.075
         """
         And the node map
             """
@@ -62,6 +49,11 @@ Feature: Testbot - side bias
             | d    | c  | bd,bc,bc | 24s +-1    |
 
     Scenario: Roundabout exit counting for left sided driving
+        Given the profile file "testbot" initialized with
+        """
+        profile.left_hand_driving = true
+        profile.turn_bias = 1/1.075
+        """
         And a grid size of 10 meters
         And the node map
             """

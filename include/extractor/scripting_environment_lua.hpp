@@ -37,7 +37,7 @@ struct LuaScriptingContext final
     sol::function segment_function;
 
     int api_version;
-    sol::optional<sol::table>  profile_table;
+    sol::table  profile_table;
 };
 
 /**

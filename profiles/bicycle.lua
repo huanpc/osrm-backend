@@ -1,19 +1,11 @@
-api_version = 2
-
 -- Bicycle profile
-local find_access_tag = require("lib/access").find_access_tag
-local Set = require('lib/set')
-local Sequence = require('lib/sequence')
-local Handlers = require("lib/handlers")
-local next = next       -- bind to local for speed
-local limit = require("lib/maxspeed").limit
 
+require('lib/profile_v2')
 
 function initialize()
   local default_speed = 15
   local walking_speed = 6
 
-  -- must be global because it's accesed externally
    return {
     max_speed_for_map_matching    = 110/3.6, -- kmph -> m/s
     use_turn_restrictions         = false,
@@ -236,13 +228,13 @@ function node_function (profile, node, result)
 end
 
 function way_function (profile, way, result)
-  -- the intial filtering of ways based on presence of tags
+  -- the initial filtering of ways based on presence of tags
   -- affects processing times significantly, because all ways
   -- have to be checked.
-  -- to increase performance, prefetching and intial tag check
-  -- is done in directly instead of via a handler.
+  -- to increase performance, prefetching and initial tag check
+  -- is done directly instead of via a handler.
 
-  -- in general we should  try to abort as soon as
+  -- in general we should try to abort as soon as
   -- possible if the way is not routable, to avoid doing
   -- unnecessary work. this implies we should check things that
   -- commonly forbids access early, and handle edge cases later.
@@ -559,3 +551,5 @@ function turn_function(profile, turn)
     turn.weight = turn.duration
   end
 end
+
+return profile_functions()
