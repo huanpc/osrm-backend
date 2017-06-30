@@ -69,7 +69,18 @@ Feature: Bicycle - Adds penalties to unsafe roads
 
     Scenario: Bike - Don't apply penalties for all kind of cycleways
         Then routability should be
-            | highway       | cycleway    | forw       | backw      | forw_rate | backw_rate |
-            | tertiary      | shared_lane | 15 km/h    | 15 km/h    | 4.2       | 4.2        |
-            | tertiary      | lane        | 15 km/h    | 15 km/h    | 4.2       | 4.2        |
-            | tertiary      | opposite    | 15 km/h    | 15 km/h    | 2.9       | 4.2        |
+            | highway  | cycleway    | forw    | backw   | forw_rate | backw_rate |
+            | tertiary | shared_lane | 15 km/h | 15 km/h |       4.2 |        4.2 |
+            | tertiary | lane        | 15 km/h | 15 km/h |       4.2 |        4.2 |
+            | tertiary | opposite    | 15 km/h | 15 km/h |       4.2 |        4.2 |
+
+
+    Scenario: Bike - Apply penalties for all kind of cycleways with an opposite lane
+        Then routability should be
+            | highway  | oneway | cycleway      | cycleway:right | cycleway:left | forw    | backw   | forw_rate | backw_rate |
+            | tertiary |      1 | opposite_lane |                |               | 15 km/h | 15 km/h |       4.2 |        4.2 |
+            | tertiary |      1 |               | opposite_lane  |               | 15 km/h | 6 km/h  |       4.2 |        1.2 |
+            | tertiary |      1 |               |                | opposite_lane | 15 km/h | 15 km/h |       2.9 |        4.2 |
+            | tertiary |     -1 | opposite_lane |                |               | 15 km/h | 15 km/h |       4.2 |        4.2 |
+            | tertiary |     -1 |               | opposite_lane  |               | 15 km/h | 15 km/h |       4.2 |        2.9 |
+            | tertiary |     -1 |               |                | opposite_lane | 6 km/h  | 15 km/h |       1.2 |        4.2 |

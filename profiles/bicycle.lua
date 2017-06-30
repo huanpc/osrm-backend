@@ -409,12 +409,10 @@ function way_function (way, result)
   if cycleway_right and profile.cycleway_tags[cycleway_right] then
     has_cycleway_right = true
   end
-  if cycleway and string.find(cycleway, "opposite") == 1 then
-    if reverse then
-      has_cycleway_right = true
-  else
-      has_cycleway_left = true
-    end
+  if cycleway and string.find(cycleway, "opposite") == 1 and not implied_oneway then
+     -- cyclists are permitted to travel in both directions on a road which is one-way for normal traffic
+     has_cycleway_right = true
+     has_cycleway_left = true
   elseif cycleway and profile.cycleway_tags[cycleway] then
     -- "cycleway" tag without left/right should not affect a direction
     -- already forbidden by oneway tags
