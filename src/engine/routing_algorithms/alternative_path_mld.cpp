@@ -147,7 +147,10 @@ double scaledAtMostLongerByFactorBasedOnDuration(EdgeWeight duration)
 // Filters candidates with much higher weight than the primary route. Mutates range in-place.
 // Returns an iterator to the filtered range's new end.
 template <typename RandIt>
-RandIt filterViaCandidatesByStretchHeuristic(RandIt first, RandIt last, EdgeWeight weight)
+RandIt filterViaCandidatesByStretchHeuristic(RandIt first,
+                                             RandIt last,
+                                             EdgeWeight weight,
+                                             double weight_multiplier)
 {
     util::static_assert_iter_category<RandIt, std::random_access_iterator_tag>();
     util::static_assert_iter_value<RandIt, WeightedViaNode>();
@@ -155,7 +158,8 @@ RandIt filterViaCandidatesByStretchHeuristic(RandIt first, RandIt last, EdgeWeig
     // Assumes weight roughly corresponds to duration-ish. If this is not the case e.g.
     // because users are setting weight to be distance in the profiles, then we might
     // either generate more candidates than we have to or not enough. But is okay.
-    const auto scaledAtMostLongerBy = scaledAtMostLongerByFactorBasedOnDuration(weight);
+    const auto scaledAtMostLongerBy =
+        scaledAtMostLongerByFactorBasedOnDuration(weight / weight_multiplier);
     const auto stretch_weight_limit = (1. + scaledAtMostLongerBy) * weight;
 
     const auto over_weight_limit = [=](const auto via) {
@@ -778,7 +782,8 @@ InternalManyRoutesResult alternativePathSearch(SearchEngineData<Algorithm> &sear
 
     it = filterViaCandidatesByUniqueNodeIds(begin(candidate_vias), it);
     it = filterViaCandidatesByRoadImportanceHeuristic(begin(candidate_vias), it, facade);
-    it = filterViaCandidatesByStretchHeuristic(begin(candidate_vias), it, shortest_path_weight);
+    it = filterViaCandidatesByStretchHeuristic(
+        begin(candidate_vias), it, shortest_path_weight, facade.GetWeightMultiplier());
 
     // Pre-rank by weight; sharing filtering below then discards by similarity.
     std::sort(begin(candidate_vias), it, [](const auto lhs, const auto rhs) {
